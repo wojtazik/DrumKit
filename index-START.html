@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JS Drum Kit</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+
+  <div id="saved-sounds">
+
+  </div>
+
+
+  <div class="keys">
+    <div data-key="65" class="key">
+      <kbd>A</kbd>
+      <span class="sound">clap</span>
+    </div>
+    <div data-key="83" class="key">
+      <kbd>S</kbd>
+      <span class="sound">hihat</span>
+    </div>
+    <div data-key="68" class="key">
+      <kbd>D</kbd>
+      <span class="sound">kick</span>
+    </div>
+    <div data-key="70" class="key">
+      <kbd>F</kbd>
+      <span class="sound">openhat</span>
+    </div>
+    <div data-key="71" class="key">
+      <kbd>G</kbd>
+      <span class="sound">boom</span>
+    </div>
+    <div data-key="72" class="key">
+      <kbd>H</kbd>
+      <span class="sound">ride</span>
+    </div>
+    <div data-key="74" class="key">
+      <kbd>J</kbd>
+      <span class="sound">snare</span>
+    </div>
+    <div data-key="75" class="key">
+      <kbd>K</kbd>
+      <span class="sound">tom</span>
+    </div>
+    <div data-key="76" class="key">
+      <kbd>L</kbd>
+      <span class="sound">tink</span>
+    </div>
+  </div>
+
+  <form class="options">
+      <select name="sound" id="selectSound" class="key sounds-list">
+        <option value="65">Clap</option>
+        <option value="83">Hihat</option>
+        <option value="68">Kick</option>
+        <option value="70">Openhat</option>
+        <option value="71">Boom</option>
+        <option value="72">Ride</option>
+        <option value="74">Snare</option>
+        <option value="75">Tom</option>
+        <option value="76">Tink</option>
+      </select>
+      <select name="repeat" id="selectRepeatInterval" class="key repeat-list">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="4">4</option>
+        <option value="8">8</option>
+        <option value="16">16</option>
+      </select>
+      <button class="key" id="saveBeat"><span class="sound"><b>Save beat</b></span></button>
+      <button class="key" id="play"><span class="sound"><b>PLAY</b></span></button>
+      <button class="key" id="stop"><span class="sound"><b>STOP</b></span></button>
+      <button class="key" id="clear"><span class="sound"><b>CLEAR</b></span></button>
+    </form>
+
+  <audio data-key="65" src="sounds/clap.wav"></audio>
+  <audio data-key="83" src="sounds/hihat.wav"></audio>
+  <audio data-key="68" src="sounds/kick.wav"></audio>
+  <audio data-key="70" src="sounds/openhat.wav"></audio>
+  <audio data-key="71" src="sounds/boom.wav"></audio>
+  <audio data-key="72" src="sounds/ride.wav"></audio>
+  <audio data-key="74" src="sounds/snare.wav"></audio>
+  <audio data-key="75" src="sounds/tom.wav"></audio>
+  <audio data-key="76" src="sounds/tink.wav"></audio>
+
+<script>
+
+  const savedSounds = document.getElementById("saved-sounds");
+  const playBtn = document.getElementById("play");
+  const stopBtn = document.getElementById("stop");
+  const clearBtn = document.getElementById("clear");
+  
+  const audio = document.getElementsByTagName("audio");
+  const divs = document.getElementsByClassName("key");
+  document.addEventListener("keydown", e => {
+      
+      for(const el of audio){
+        if(el.dataset.key == e.which){
+          el.currentTime = 0;
+          el.play();
+        }
+      }
+      for(const el of divs){
+        if(el.dataset.key == e.which){
+          el.classList.add("playing");
+          setTimeout(()=>{
+            el.classList.remove("playing");
+          },300)
+        }
+      }
+
+  });
+  
+
+  function PlaySound(soundCode, interval){
+    this.soundCode = soundCode;
+    this.interval = interval*200;
+  }
+  PlaySound.prototype.play = function(){
+    for(const el of audio){
+        if(el.dataset.key == this.soundCode){
+          var interval = setInterval(()=>{
+            el.play();
+          },this.interval);
+
+          stopBtn.addEventListener("click", (e)=>{
+             e.preventDefault();
+            clearInterval(interval);
+          });
+        }
+      }
+  }
+
+  PlaySound.prototype.pause = function(){
+    for(const el of audio){
+        if(el.dataset.key == this.soundCode){
+          el.pause();
+          el.currentTime = 0;
+        }
+      }
+  }
+
+  let sound = new PlaySound("65",2);
+  let sound2 = new PlaySound("83",8);
+  let sound3 = new PlaySound("71",1);
+
+  //sound.play();
+  //sound2.play();
+  //sound3.play();
+  var selectedSounds = [];
+
+
+
+  
+    saveBtn = document.getElementById("saveBeat");
+    saveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const selectSound = document.getElementById("selectSound");
+      const selectInterval = document.getElementById("selectRepeatInterval");
+      const selectedSound = selectSound.options[selectSound.selectedIndex].value;
+      const selectedSoundText = selectSound.options[selectSound.selectedIndex].text;
+      const selectedInterval = parseInt(selectInterval.options[selectInterval.selectedIndex].value);
+      const newSound= new PlaySound(selectedSound,selectedInterval);
+      
+
+      const newElem = document.createElement("p");
+      newElem.classList.add("key","soundDescr");
+      newElem.appendChild(document.createTextNode(`Sound: ${selectedSoundText} Repeat: ${selectedInterval}/16`));
+      savedSounds.appendChild(newElem);
+
+      selectedSounds.push(newSound);
+    });
+
+    playBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      for(const sound of selectedSounds){
+        sound.play();
+      } 
+    });
+
+    stopBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      for(const sound of selectedSounds){
+        clearInterval(sound);
+      } 
+    });
+    clearBtn.addEventListener("click", (e)=>{
+      stopBtn.onclick();
+      selectedsounds = [];
+      savedSounds.innerHTML="";
+    });
+</script>
+
+
+</body>
+</html>
